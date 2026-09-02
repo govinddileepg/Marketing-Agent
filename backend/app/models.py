@@ -6,8 +6,8 @@ class BusinessProfile(BaseModel):
     name: str
     website: Optional[str] = None
     location: Optional[str] = None
-    industry: str
-    description: str
+    industry: str = "Unknown"
+    description: str = ""
     target_customers: List[str] = Field(default_factory=list)
     products: List[str] = Field(default_factory=list)
     differentiators: List[str] = Field(default_factory=list)
@@ -17,17 +17,20 @@ class BusinessProfile(BaseModel):
 
 class BusinessAnalysis(BaseModel):
     business_summary: str
-    target_audience: List[str]
-    customer_pain_points: List[str]
+    what_business_sells: List[str]
+    target_audiences: List[str]
+    customer_problems: List[str]
     customer_motivations: List[str]
     jobs_to_be_done: List[str]
-    unique_selling_propositions: List[str]
+    unique_value_proposition: str
     competitive_positioning: str
     brand_personality: List[str]
+    strengths: List[str]
+    weaknesses: List[str]
     market_opportunities: List[str]
     content_opportunities: List[str]
-    weaknesses_and_risks: List[str]
     recommended_positioning: str
+    analyst_opinion: str
 
 
 class MarketingProfile(BaseModel):
@@ -52,6 +55,6 @@ class VisibilityPlan(BaseModel):
 
 class AnalyzeResponse(BaseModel):
     business: BusinessProfile
-    analysis: Optional[BusinessAnalysis] = None
+    business_analysis: BusinessAnalysis
     marketing_profile: MarketingProfile
     visibility_plan: VisibilityPlan
