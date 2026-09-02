@@ -29,9 +29,23 @@ Rules:
 
 
 class OpenAIBusinessAnalyzer(BusinessAnalyzer):
-    def __init__(self, api_key: str, model: str = "gpt-5.6-luna") -> None:
-        self.client = OpenAI(api_key=api_key)
+    """Business analyzer using an OpenAI-compatible API endpoint."""
+
+    def __init__(
+        self,
+        api_key: str,
+        model: str = "gpt-5.6-luna",
+        base_url: str | None = None,
+        app_url: str | None = None,
+        app_name: str = "Marketing Agent",
+    ) -> None:
+        kwargs = {"api_key": api_key}
+        if base_url:
+            kwargs["base_url"] = base_url
+        self.client = OpenAI(**kwargs)
         self.model = model
+        self.app_url = app_url
+        self.app_name = app_name
 
     def analyze(
         self,
@@ -55,17 +69,30 @@ class OpenAIBusinessAnalyzer(BusinessAnalyzer):
             ),
         }
 
-        response = self.client.responses.parse(
+        extra_headers = {}
+        if self.app_url:
+            extra_headers["HTTP-Referer"] = self.app_url
+        if self.app_name:
+            extra_headers["X-OpenRouter-Title"] = self.app_name
+
+        response = self.client.chat.completions.create(
             model=self.model,
-            input=[
+            messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {
                     "role": "user",
                     "content": json.dumps(evidence, ensure_ascii=False),
                 },
             ],
-            text_format=BusinessAnalysis,
+            response_format={"type": "json_object"},
+            extra_headers=extra_headers or None,
         )
-        if response.output_parsed is None:
-            raise RuntimeError("OpenAI returned no structured business analysis")
-        return response.output_parsed
+
+        content = response.choices[0].message.content
+        if not content:
+            raise RuntimeError("AI provider returned no business analysis")
+
+        try:
+            return BusinessAnalysis.model_validate_json(content)
+        except Exception as exc:
+            raise RuntimeError("AI provider returned invalid business-analysis JSON") from exc
