@@ -1,11 +1,11 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from .models import AnalyzeResponse, BusinessProfile
 from .services import analyze_business, create_visibility_plan, understand_business
 from .website import fetch_website
 
-app = FastAPI(title="Marketing Agent API", version="0.2.0")
+app = FastAPI(title="Marketing Agent API", version="0.2.1")
 
 
 class WebsiteAnalyzeRequest(BaseModel):
@@ -20,9 +20,13 @@ def health() -> dict[str, str]:
 
 @app.post("/api/v1/analyze", response_model=AnalyzeResponse)
 def analyze(business: BusinessProfile) -> AnalyzeResponse:
+    try:
+        analysis = understand_business(business)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Business analysis failed: {exc}") from exc
+
     profile = analyze_business(business)
     plan = create_visibility_plan(business, profile)
-    analysis = understand_business(business)
     return AnalyzeResponse(
         business=business,
         business_analysis=analysis,
@@ -48,7 +52,11 @@ def analyze_website(request: WebsiteAnalyzeRequest) -> AnalyzeResponse:
     if not business.description:
         business.description = website.description
 
-    analysis = understand_business(business, website)
+    try:
+        analysis = understand_business(business, website)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Business analysis failed: {exc}") from exc
+
     profile = analyze_business(business)
     plan = create_visibility_plan(business, profile)
     return AnalyzeResponse(
