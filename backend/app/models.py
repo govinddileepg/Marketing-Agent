@@ -15,6 +15,21 @@ class BusinessProfile(BaseModel):
     channels: List[str] = Field(default_factory=list)
 
 
+class BusinessAnalysis(BaseModel):
+    business_summary: str
+    target_audience: List[str]
+    customer_pain_points: List[str]
+    customer_motivations: List[str]
+    jobs_to_be_done: List[str]
+    unique_selling_propositions: List[str]
+    competitive_positioning: str
+    brand_personality: List[str]
+    market_opportunities: List[str]
+    content_opportunities: List[str]
+    weaknesses_and_risks: List[str]
+    recommended_positioning: str
+
+
 class MarketingProfile(BaseModel):
     positioning: str
     audience_segments: List[str]
@@ -37,5 +52,6 @@ class VisibilityPlan(BaseModel):
 
 class AnalyzeResponse(BaseModel):
     business: BusinessProfile
+    analysis: Optional[BusinessAnalysis] = None
     marketing_profile: MarketingProfile
     visibility_plan: VisibilityPlan
