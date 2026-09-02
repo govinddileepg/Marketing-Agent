@@ -1,3 +1,4 @@
+from .ai.factory import get_business_analyzer
 from .models import BusinessAnalysis, BusinessProfile, MarketingProfile, VisibilityPlan
 from .website import WebsiteSnapshot
 
@@ -43,77 +44,13 @@ def analyze_business(business: BusinessProfile) -> MarketingProfile:
     )
 
 
-def understand_business(business: BusinessProfile, website: WebsiteSnapshot | None = None) -> BusinessAnalysis:
-    site_text = website.text if website else ""
-    site_title = website.title if website else ""
-    site_description = website.description if website else ""
-    headings = website.headings if website else []
-
-    summary = business.description or site_description or f"{business.name} operates in the {business.industry} space."
-    products = business.products or ([h for h in headings if len(h) < 120][:8] or ["Core products/services"])
-    audiences = business.target_customers or ["Visitors and potential customers identified from the business proposition"]
-    problems = [
-        "Customers need to understand the value and relevance of the offering quickly",
-        "Customers need confidence before making an enquiry or purchase",
-    ]
-    motivations = ["Convenience", "Quality", "Trust", "A clear outcome"]
-    jobs = ["Discover a suitable solution", "Compare options", "Make a confident purchase decision"]
-
-    if site_description:
-        summary = site_description
-    if site_title and site_title.lower() not in summary.lower():
-        summary = f"{site_title}. {summary}"
-
-    evidence_note = "Website content was supplied to the analyst." if website else "No website content was supplied; conclusions are based on the provided business profile."
-    text_signal = site_text[:400].replace("\n", " ") if site_text else "No website text was available."
-
-    return BusinessAnalysis(
-        business_summary=f"{summary} {evidence_note}",
-        what_business_sells=products,
-        target_audiences=audiences,
-        customer_problems=problems,
-        customer_motivations=motivations,
-        jobs_to_be_done=jobs,
-        unique_value_proposition=(
-            business.differentiators[0] if business.differentiators else
-            "The strongest value proposition needs to be validated from the business's actual offer and customer proof."
-        ),
-        competitive_positioning=(
-            f"Position {business.name} around a specific customer outcome rather than competing only on features. "
-            "The next research step should benchmark direct competitors and pricing."
-        ),
-        brand_personality=["Clear", "Trustworthy", "Customer-focused", "Visually consistent"],
-        strengths=[
-            "The business can turn its real products/services into concrete marketing assets",
-            "A focused value proposition can be repeated consistently across channels",
-            f"Website messaging provides initial market signals: {text_signal}",
-        ],
-        weaknesses=[
-            "Competitor and market data has not yet been independently benchmarked",
-            "Customer proof, reviews and conversion performance are not yet connected",
-            "The current analysis should not infer claims that are not supported by source evidence",
-        ],
-        market_opportunities=[
-            "Own a clearly defined customer problem and occasion",
-            "Create differentiated content around real products and customer outcomes",
-            "Build trust through examples, reviews and demonstrations",
-        ],
-        content_opportunities=[
-            "Product/service showcases",
-            "Before-and-after or process demonstrations",
-            "Customer questions and educational posts",
-            "Social proof and customer stories",
-            "Strong conversion-focused offers",
-        ],
-        recommended_positioning=(
-            f"Make {business.name} easy to understand in seconds: who it is for, what it offers, "
-            "why it is different, and what the customer should do next."
-        ),
-        analyst_opinion=(
-            "The business is understandable at a high level, but a confident strategic opinion requires "
-            "competitor, audience and performance evidence in addition to website copy."
-        ),
-    )
+def understand_business(
+    business: BusinessProfile,
+    website: WebsiteSnapshot | None = None,
+) -> BusinessAnalysis:
+    """Run the configured business-analysis provider against the available evidence."""
+    analyzer = get_business_analyzer()
+    return analyzer.analyze(business, website)
 
 
 def create_visibility_plan(business: BusinessProfile, profile: MarketingProfile) -> VisibilityPlan:
